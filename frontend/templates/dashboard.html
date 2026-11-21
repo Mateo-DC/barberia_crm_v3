@@ -1,0 +1,94 @@
+{% extends 'base.html' %}{% block content %}
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">PANEL DE CONTROL</p>
+    <h1>Resumen del negocio</h1>
+    <p class="muted">
+      Actividad, fidelización y clientes que esperan una promoción.
+    </p>
+  </div>
+  <a class="button-link" href="/asistencias">Registrar asistencia</a>
+</div>
+<section class="stats">
+  <article><small>Clientes</small><strong>{{ clientes }}</strong></article>
+  <article>
+    <small>Ingresos últimos 30 días</small
+    ><strong>S/ {{ '%.2f'|format(ingresos) }}</strong>
+  </article>
+  <article>
+    <small>Ventas registradas</small><strong>{{ ventas }}</strong>
+  </article>
+  <article>
+    <small>Clientes inactivos</small><strong>{{ inactivos }}</strong>
+  </article>
+</section>
+<section class="panel">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">FIDELIZACIÓN</p>
+      <h2>Notificaciones de promociones</h2>
+    </div>
+    {% if notifications_pending %}<span class="pill warning"
+      >{{ notifications_pending }} pendientes</span
+    >{% endif %}
+  </div>
+  {% if notifications %}
+  <div class="notification-list">
+    {% for n in notifications %}
+    <article class="notification {% if n['leida'] %}is-read{% endif %}">
+      <div class="notification-icon">
+        {% if n['leida'] %}✓{% else %}!{% endif %}
+      </div>
+      <div class="notification-content">
+        <strong>{{ n['nombre'] }} desbloqueó {{ n['promocion'] }}</strong>
+        <p>
+          {{ n['meta_visitas'] }} asistencias completadas{% if n['premio'] %} ·
+          Premio: {{ n['premio'] }}{% endif %}
+        </p>
+        <small>{{ n['fecha_logro'] }} · Ronda {{ n['ronda'] }}</small>
+      </div>
+      <form
+        method="post"
+        action="/notificaciones/{{ n['notificacion_id'] }}/leer"
+      >
+        <button class="button-secondary" type="submit">Marcar leída</button>
+      </form>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="muted">
+    Todavía no hay clientes que hayan desbloqueado promociones. Configura una
+    regla y registra sus asistencias.
+  </p>
+  {% endif %}<a href="/fidelizacion" class="text-link"
+    >Administrar promociones y grupos →</a
+  >
+</section>
+<section class="panel">
+  <div class="section-heading">
+    <h2>Ventas recientes</h2>
+    <span class="pill"
+      >Ticket medio reciente: S/ {{ '%.2f'|format(ticket_medio) }}</span
+    >
+  </div>
+  <div class="table-wrap">
+    <table>
+      <tr>
+        <th>Fecha</th>
+        <th>Cliente</th>
+        <th>Importe</th>
+        <th>Campaña</th>
+      </tr>
+      {% for v in ventas_recientes %}
+      <tr>
+        <td>{{ v['fecha'] }}</td>
+        <td>{{ v['nombre'] }}</td>
+        <td>S/ {{ '%.2f'|format(v['monto']) }}</td>
+        <td>{{ v['campana_asociada'] }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+</section>
+{% endblock %}

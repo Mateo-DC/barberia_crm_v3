@@ -1,0 +1,36 @@
+{% extends 'base.html' %}{% block content %}
+<h1>Campaña preparada</h1>
+<p>
+  {{ items|length }} destinatarios incluidos. El archivo CSV contiene los
+  mensajes y enlaces personalizados.
+</p>
+{% if image_url %}
+<p>Imagen guardada (visible desde la PC anfitriona):</p>
+<img class="campaign-image" src="{{ image_url }}" alt="Imagen de campaña" />{%
+endif %}
+<p>
+  <a class="button-link" href="/descargar-campana"
+    >Descargar destinatarios CSV</a
+  >
+</p>
+<div class="table-wrap">
+  <table>
+    <tr>
+      <th>Cliente</th>
+      <th>Mensaje</th>
+      <th>Acción</th>
+    </tr>
+    {% for item in items %}
+    <tr>
+      <td>{{ item.nombre }}</td>
+      <td>{{ item.mensaje }}</td>
+      <td>
+        <a target="_blank" rel="noopener" href="{{ item.url }}"
+          >Preparar WhatsApp</a
+        >
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

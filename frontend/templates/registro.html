@@ -1,0 +1,31 @@
+{% extends 'base.html' %}{% block content %}
+<section class="form-card">
+  <h1>Registro de cliente</h1>
+  <p>Completa tus datos para registrarte en la barbería.</p>
+  {% if ok == 1 %}
+  <div class="notice">Registro completado.</div>
+  {% elif ok == 2 %}
+  <div class="error">
+    Revisa el nombre y el teléfono. Incluye el código de país.
+  </div>
+  {% endif %}
+  <form method="post">
+    <label
+      >Nombre completo<input
+        name="nombre"
+        required
+        minlength="2"
+        maxlength="100"
+        autocomplete="name" /></label
+    ><label
+      >Teléfono con código de país<input
+        name="telefono"
+        required
+        minlength="8"
+        maxlength="20"
+        placeholder="51987654321"
+        autocomplete="tel" /></label
+    ><button>Registrar</button>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,210 @@
+{% extends 'base.html' %}{% block content %}
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">REGLAS AUTOMÁTICAS</p>
+    <h1>Fidelización y promociones</h1>
+    <p class="muted">
+      Define quién puede desbloquear una promoción y qué ocurre al alcanzar la
+      meta.
+    </p>
+  </div>
+</div>
+{% if request.query_params.get('ok') == '1' %}
+<div class="notice">Promoción creada correctamente.</div>
+{% elif request.query_params.get('ok') == '2' %}
+<div class="notice">Grupo creado correctamente.</div>
+{% elif request.query_params.get('ok') == '3' %}
+<div class="notice">Cliente asignado al grupo.</div>
+{% endif %}
+<div class="two-column">
+  <section class="form-card">
+    <p class="eyebrow">NUEVA REGLA</p>
+    <h2>Crear promoción</h2>
+    <form method="post" action="/fidelizacion/promociones">
+      <label
+        >Nombre de la promoción<input
+          name="nombre"
+          required
+          maxlength="100"
+          placeholder="Ej. Premio por cinco visitas" /></label
+      ><label
+        >Descripción<textarea
+          name="descripcion"
+          rows="2"
+          placeholder="Detalles que verá el equipo"
+        ></textarea></label
+      ><label
+        >Premio o beneficio<input
+          name="premio"
+          placeholder="Ej. 20 % de descuento" /></label
+      ><label
+        >Meta de asistencias<input
+          type="number"
+          name="meta_visitas"
+          min="1"
+          max="1000"
+          value="5"
+          required /></label
+      ><label
+        >Cómo contar las visitas<select name="modo_conteo">
+          <option value="consecutivas">
+            Consecutivas (reinicia si marcas una ruptura en Asistencias)
+          </option>
+          <option value="acumuladas">Acumuladas (total de visitas)</option>
+        </select></label
+      ><label
+        >Repetición de la promoción<select name="repeticion">
+          <option value="una_vez">Una sola vez por cliente</option>
+          <option value="recurrente">Recurrente por rondas completas</option>
+        </select></label
+      ><label
+        >Aplicar a<select name="tipo_objetivo" id="targetType">
+          <option value="categoria">Categoría de cliente</option>
+          <option value="grupo">Grupo manual</option>
+          <option value="todos">Todos los clientes</option>
+        </select></label
+      ><label id="targetLabel"
+        >Categoría<select name="objetivo" id="targetValue">
+          {% for t in tipos %}
+          <option>{{ t }}</option>
+          {% endfor %}{% for g in grupos %}
+          <option data-group="{{ g['nombre'] }}">{{ g['nombre'] }}</option>
+          {% endfor %}
+        </select></label
+      ><label
+        >Mensaje de WhatsApp<textarea name="mensaje" rows="4" required>
+Hola {nombre}, ¡has desbloqueado {promocion}! Tu beneficio: {premio}. Te esperamos.</textarea
+        ><small class="muted"
+          >Variables disponibles: {nombre}, {promocion}, {premio}, {visitas},
+          {ronda}.</small
+        ></label
+      >
+      <div class="two-fields">
+        <label>Desde<input type="date" name="fecha_inicio" /></label
+        ><label>Hasta<input type="date" name="fecha_fin" /></label>
+      </div>
+      <button>Guardar promoción</button>
+    </form>
+  </section>
+  <div class="stack">
+    <section class="form-card">
+      <p class="eyebrow">SEGMENTACIÓN</p>
+      <h2>Crear grupo manual</h2>
+      <form method="post" action="/grupos">
+        <label
+          >Nombre del grupo<input
+            name="nombre"
+            required
+            maxlength="80"
+            placeholder="Ej. Clientes del turno mañana" /></label
+        ><label
+          >Descripción<input
+            name="descripcion"
+            maxlength="200"
+            placeholder="Uso interno" /></label
+        ><button>Crear grupo</button>
+      </form>
+    </section>
+    <section class="form-card">
+      <h2>Asignar cliente a grupo</h2>
+      <form method="post" action="/grupos/asignar">
+        <label
+          >Cliente<select name="cliente_id" required>
+            {% for c in clientes_grupos %}
+            <option value="{{ c['id'] }}">
+              {{ c['nombre'] }} · {{ c['tipo_cliente'] }}
+            </option>
+            {% endfor %}
+          </select></label
+        ><label
+          >Grupo<select name="grupo_id" required>
+            {% for g in grupos %}
+            <option value="{{ g['id'] }}">{{ g['nombre'] }}</option>
+            {% endfor %}
+          </select></label
+        ><button>Asignar</button>
+      </form>
+      <h3>Grupos activos</h3>
+      {% if grupos %}
+      <ul class="simple-list">
+        {% for g in grupos %}
+        <li>
+          <strong>{{ g['nombre'] }}</strong
+          ><small>{{ g['descripcion'] or 'Sin descripción' }}</small>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="muted">Todavía no hay grupos manuales.</p>
+      {% endif %}
+    </section>
+  </div>
+</div>
+<section class="panel">
+  <h2>Promociones configuradas</h2>
+  {% if promociones %}
+  <div class="promotion-grid">
+    {% for p in promociones %}
+    <article class="promotion-card">
+      <div class="section-heading">
+        <h3>{{ p['nombre'] }}</h3>
+        <span
+          class="pill {% if p['activa'] %}success{% else %}muted-pill{% endif %}"
+          >{% if p['activa'] %}Activa{% else %}Inactiva{% endif %}</span
+        >
+      </div>
+      <p>{{ p['descripcion'] or 'Sin descripción adicional.' }}</p>
+      <div class="rule-summary">
+        <strong>{{ p['meta_visitas'] }} visitas</strong
+        ><span
+          >{{ 'Consecutivas' if p['modo_conteo']=='consecutivas' else
+          'Acumuladas' }}</span
+        ><span
+          >{{ 'Recurrente' if p['repeticion']=='recurrente' else 'Una sola vez'
+          }}</span
+        ><span
+          >{% if p['tipo_objetivo']=='todos' %}Todos los clientes{% elif
+          p['tipo_objetivo']=='categoria' %}Categoría: {{ p['objetivo'] }}{%
+          else %}Grupo: {{ p['objetivo'] }}{% endif %}</span
+        >
+      </div>
+      {% if p['premio'] %}
+      <p><strong>Beneficio:</strong> {{ p['premio'] }}</p>
+      {% endif %}
+      <form
+        method="post"
+        action="/fidelizacion/promociones/{{ p['id'] }}/alternar"
+      >
+        <button class="button-secondary">
+          {{ 'Desactivar promoción' if p['activa'] else 'Activar promoción' }}
+        </button>
+      </form>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="muted">
+    Aún no hay promociones. Crea la primera con el formulario.
+  </p>
+  {% endif %}
+</section>
+<script>
+  const type = document.getElementById("targetType"),
+    target = document.getElementById("targetValue"),
+    label = document.getElementById("targetLabel");
+  function syncTarget() {
+    const groups = [...target.options].filter((o) => o.dataset.group);
+    [...target.options].forEach((o) => {
+      if (o.dataset.group) o.hidden = type.value !== "grupo";
+      else o.hidden = type.value === "grupo";
+    });
+    label.hidden = type.value === "todos";
+    label.firstChild.textContent =
+      type.value === "grupo" ? "Grupo manual" : "Categoría";
+    const first = [...target.options].find((o) => !o.hidden);
+    if (first) target.value = first.value;
+  }
+  type.addEventListener("change", syncTarget);
+  syncTarget();
+</script>
+{% endblock %}

@@ -1,0 +1,13 @@
+*.db
+*.sqlite3
+.venv/
+.venv-build/
+build/
+reports/
+__pycache__/
+__init__.py
+*.pyc
+.DS_Store
+data/*
+!data/.gitkeep
+

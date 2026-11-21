@@ -1,0 +1,8 @@
+// Fuente de estilos: compilar con frontend/build_styles.bat.
+// Sass emite frontend/static/css/style.css. Se conserva en el proyecto
+// para que el ejecutable no dependa de Node o Sass en tiempo de ejecución.
+@use "partials/tokens";
+@use "partials/reset";
+@use "partials/navigation";
+@use "partials/components";
+@use "partials/responsive";

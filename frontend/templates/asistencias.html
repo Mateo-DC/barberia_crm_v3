@@ -1,0 +1,67 @@
+{% extends 'base.html' %}{% block content %}
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">CONTROL DE VISITAS</p>
+    <h1>Registrar asistencia</h1>
+    <p class="muted">
+      Registra una visita por cliente. Las reglas de promoción se evalúan
+      automáticamente.
+    </p>
+  </div>
+</div>
+{% if ok %}
+<div class="notice">
+  Asistencia registrada y reglas de fidelización evaluadas.
+</div>
+{% endif %}
+<section class="form-card">
+  <form method="post">
+    <label
+      >Cliente<select name="cliente_id" required>
+        {% for c in clientes %}
+        <option value="{{ c['id'] }}">
+          {{ c['nombre'] }} · {{ c['tipo_cliente'] }}
+        </option>
+        {% endfor %}
+      </select></label
+    ><label
+      >Fecha de asistencia<input
+        type="date"
+        name="fecha"
+        value="{{ today }}"
+        required /></label
+    ><label
+      >Nota opcional<input
+        name="nota"
+        maxlength="250"
+        placeholder="Ej. corte de cabello" /></label
+    ><label class="check-label"
+      ><input type="checkbox" name="rompe_racha" value="1" /> Registrar que se
+      rompió la racha de visitas consecutivas</label
+    ><button>Registrar asistencia</button>
+  </form>
+</section>
+<section class="panel">
+  <h2>Últimas asistencias</h2>
+  <div class="table-wrap">
+    <table>
+      <tr>
+        <th>Fecha</th>
+        <th>Cliente</th>
+        <th>Categoría</th>
+        <th>Nota</th>
+        <th>Racha</th>
+      </tr>
+      {% for a in asistencias %}
+      <tr>
+        <td>{{ a['fecha'] }}</td>
+        <td>{{ a['nombre'] }}</td>
+        <td>{{ a['tipo_cliente'] }}</td>
+        <td>{{ a['nota'] or '—' }}</td>
+        <td>{{ 'Reiniciada' if a['rompe_racha'] else 'Continúa' }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+</section>
+{% endblock %}
