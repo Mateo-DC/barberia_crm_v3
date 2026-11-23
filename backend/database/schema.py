@@ -89,17 +89,25 @@ def init_db():
             CREATE INDEX IF NOT EXISTS idx_ventas_fecha ON ventas(fecha);
             CREATE INDEX IF NOT EXISTS idx_ventas_cliente ON ventas(cliente_id);
         """)
-        attendance_columns = {
-            row["name"]
-            for row in connection.execute("PRAGMA table_info(asistencias)").fetchall()
-        }
-        if "rompe_racha" not in attendance_columns:
-            connection.execute(
-                "ALTER TABLE asistencias ADD COLUMN rompe_racha INTEGER NOT NULL DEFAULT 0"
-            )
-        # Backfill attendance history from existing sales only once.
-        count = connection.execute("SELECT COUNT(*) FROM asistencias").fetchone()[0]
-        if count == 0:
-            connection.execute("""INSERT INTO asistencias(cliente_id, fecha, nota)
-                SELECT cliente_id, fecha, 'Importada de una venta existente'
-                FROM ventas ORDER BY fecha, id""")
+        venta_columns = {row['name'] for row in connection.execute('PRAGMA table_info(ventas)').fetchall()}
+        if 'servicio' not in venta_columns:
+            connection.execute("ALTER TABLE ventas ADD COLUMN servicio TEXT NOT NULL DEFAULT 'Servicio general'")
+        connection.execute("""CREATE TABLE IF NOT EXISTS servicios (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL UNIQUE COLLATE NOCASE,
+            precio REAL NOT NULL DEFAULT 0 CHECK(precio >= 0),
+            activo INTEGER NOT NULL DEFAULT 1
+        )""")
+        attendance_columns = {row['name'] for row in connection.execute('PRAGMA table_info(asistencias)').fetchall()}
+        if 'rompe_racha' not in attendance_columns:
+            connection.execute('ALTER TABLE asistencias ADD COLUMN rompe_racha INTEGER NOT NULL DEFAULT 0')
+        # Migración histórica identificada para no importar futuras ventas como visitas.
+        connection.execute("CREATE TABLE IF NOT EXISTS schema_meta (clave TEXT PRIMARY KEY, valor TEXT NOT NULL)")
+        imported = connection.execute("SELECT valor FROM schema_meta WHERE clave='ventas_asistencias_v1'").fetchone()
+        if not imported:
+            count = connection.execute("SELECT COUNT(*) FROM asistencias").fetchone()[0]
+            if count == 0:
+                connection.execute("""INSERT INTO asistencias(cliente_id, fecha, nota)
+                    SELECT cliente_id, fecha, 'Importada de una venta existente'
+                    FROM ventas ORDER BY fecha, id""")
+            connection.execute("INSERT INTO schema_meta(clave, valor) VALUES ('ventas_asistencias_v1','1')")

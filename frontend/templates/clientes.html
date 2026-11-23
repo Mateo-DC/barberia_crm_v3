@@ -1,40 +1,6 @@
 {% extends 'base.html' %}{% block content %}
-<h1>Clientes</h1>
-<form class="inline" method="get">
-  <label
-    >Filtrar por categoría<select name="tipo">
-      <option value="">Todos</option>
-      {% for t in tipos %}
-      <option {% if tipo="" ="t" %}selected{% endif %}>{{ t }}</option>
-      {% endfor %}
-    </select></label
-  ><button>Filtrar</button>
-</form>
-<div class="table-wrap">
-  <table>
-    <tr>
-      <th>Nombre</th>
-      <th>Teléfono</th>
-      <th>Tipo</th>
-      <th>Última visita</th>
-      <th>WhatsApp</th>
-    </tr>
-    {% for c in clientes %}
-    <tr>
-      <td>{{ c['nombre'] }}</td>
-      <td>{{ c['telefono'] }}</td>
-      <td>{{ c['tipo_cliente'] }}</td>
-      <td>{{ c['ultima_visita'] or '—' }}</td>
-      <td>
-        <a
-          target="_blank"
-          rel="noopener"
-          href="https://wa.me/{{ c['telefono']|replace('+','')|replace(' ','') }}"
-          >Abrir chat</a
-        >
-      </td>
-    </tr>
-    {% endfor %}
-  </table>
-</div>
+<div class="page-heading"><div><p class="eyebrow">01 / CLIENTES</p><h1>Personas que vuelven</h1><p class="muted">Consulta fichas, corrige sus datos y abre el chat directamente.</p></div><a class="button-link" href="/registro">Nuevo cliente</a></div>
+{% if request.query_params.get('ok') == '1' %}<div class="notice">Ficha del cliente actualizada.</div>{% endif %}
+<section class="panel"><div class="section-heading"><h2>Directorio <span class="pill">{{ clientes|length }}</span></h2><form class="toolbar" method="get"><label class="compact-label">Categoría<select name="tipo"><option value="">Todas las categorías</option>{% for t in tipos %}<option value="{{ t }}" {% if tipo == t %}selected{% endif %}>{{ t }}</option>{% endfor %}</select></label><button type="submit" class="button-secondary">Aplicar</button></form></div>
+<div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Contacto</th><th>Categoría</th><th>Visitas</th><th>Acciones</th></tr></thead><tbody>{% for c in clientes %}<tr><td><strong>{{ c['nombre'] }}</strong><small class="cell-subtitle">Última: {{ c['ultima_visita'] or 'Sin visitas' }}</small></td><td>{{ c['telefono'] }}</td><td><span class="pill">{{ c['tipo_cliente'] }}</span></td><td>{{ c['visitas_totales'] }}</td><td class="row-actions"><a class="action-link" href="/clientes/{{ c['id'] }}/editar">Editar</a><a class="action-link" rel="noopener" target="_blank" href="https://wa.me/{{ c['telefono']|replace('+','')|replace(' ','') }}">WhatsApp</a></td></tr>{% else %}<tr><td colspan="5">No hay clientes con este filtro. <a href="/registro">Registra uno</a>.</td></tr>{% endfor %}</tbody></table></div></section>
 {% endblock %}

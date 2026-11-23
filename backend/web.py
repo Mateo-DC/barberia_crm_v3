@@ -12,15 +12,16 @@ from backend.config import BASE_DIR, DATA_DIR, DB_PATH, APP_TITLE, CLIENT_TYPES,
 from backend.database.schema import init_db
 from backend.database.seed import seed_demo_data
 from backend.database.connection import get_connection
-from backend.repositories.clientes import listar_clientes, crear_cliente
+from backend.repositories.clientes import listar_clientes, crear_cliente, obtener_cliente, actualizar_cliente
 from backend.repositories.ventas import listar_ventas, registrar_venta
 from backend.repositories.fidelizacion import (
     listar_grupos, crear_grupo, asignar_cliente_grupo, crear_promocion,
-    listar_promociones, registrar_asistencia, datos_dashboard,
+    listar_promociones, obtener_promocion, actualizar_promocion, registrar_asistencia, datos_dashboard,
     marcar_notificacion_leida, marcar_logro_preparado, marcar_cliente_promocion_preparado, alternar_promocion, listar_asistencias,
     listar_clientes_grupos,
 )
 from backend.services.fidelizacion import personalizar_mensaje
+from backend.repositories.servicios import listar_servicios, guardar_servicio, alternar_servicio
 from backend.security.access import is_host_request, public_registration_path
 from backend.analytics.metrics import calcular_indicadores_ventas
 
@@ -94,19 +95,73 @@ def clientes_page(request: Request, tipo: str = ''):
     return render(request, 'clientes.html', clientes=clients, tipos=CLIENT_TYPES, tipo=tipo)
 
 
+@app.get('/clientes/{cliente_id}/editar', response_class=HTMLResponse)
+def editar_cliente_page(request: Request, cliente_id: int):
+    if not is_host_request(request):
+        raise HTTPException(403)
+    cliente = obtener_cliente(cliente_id)
+    if not cliente:
+        raise HTTPException(404, 'Cliente no encontrado.')
+    return render(request, 'cliente_editar.html', cliente=cliente, tipos=CLIENT_TYPES)
+
+
+@app.post('/clientes/{cliente_id}/editar')
+def editar_cliente_submit(request: Request, cliente_id: int, nombre: str = Form(...), telefono: str = Form(...), tipo_cliente: str = Form(...)):
+    if not is_host_request(request):
+        raise HTTPException(403)
+    nombre = nombre.strip()
+    telefono = ''.join(c for c in telefono if c.isdigit())
+    if len(nombre) < 2 or not 8 <= len(telefono) <= 15 or tipo_cliente not in CLIENT_TYPES:
+        raise HTTPException(400, 'Revisa el nombre, teléfono y categoría.')
+    if not actualizar_cliente(cliente_id, nombre, telefono, tipo_cliente):
+        raise HTTPException(404)
+    return RedirectResponse('/clientes?ok=1', status_code=303)
+
+
+
 @app.get('/ventas', response_class=HTMLResponse)
 def ventas_page(request: Request):
     if not is_host_request(request):
         raise HTTPException(403, 'Panel disponible únicamente desde la PC anfitriona.')
-    return render(request, 'ventas.html', ventas=listar_ventas(), clientes=listar_clientes(), campanas=CAMPAIGNS, today=date.today().isoformat())
+    return render(request, 'ventas.html', ventas=listar_ventas(), clientes=listar_clientes(), campanas=CAMPAIGNS, servicios=[s for s in listar_servicios() if s['activo']], today=date.today().isoformat())
 
 
 @app.post('/ventas')
-def ventas_submit(request: Request, cliente_id: int = Form(...), monto: float = Form(...), fecha: str = Form(...), campana: str = Form('Sin campaña')):
+def ventas_submit(request: Request, cliente_id: int = Form(...), monto: float = Form(...), fecha: str = Form(...), campana: str = Form('Sin campaña'), servicio: str = Form('Servicio general')):
     if not is_host_request(request):
         raise HTTPException(403, 'No autorizado.')
-    registrar_venta(cliente_id, monto, fecha, campana)
+    if servicio != 'Servicio general' and not any(s['nombre'] == servicio and s['activo'] for s in listar_servicios()):
+        raise HTTPException(400, 'Selecciona un servicio activo.')
+    registrar_venta(cliente_id, monto, fecha, campana, servicio)
     return RedirectResponse('/ventas', status_code=303)
+
+
+@app.get('/servicios', response_class=HTMLResponse)
+def servicios_page(request: Request):
+    if not is_host_request(request):
+        raise HTTPException(403)
+    return render(request, 'servicios.html', servicios=listar_servicios())
+
+
+@app.post('/servicios')
+def servicios_guardar(request: Request, nombre: str = Form(...), precio: float = Form(...), servicio_id: int = Form(0)):
+    if not is_host_request(request):
+        raise HTTPException(403)
+    try:
+        guardar_servicio(nombre, precio, servicio_id or None)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except __import__('sqlite3').IntegrityError as exc:
+        raise HTTPException(400, 'Ya existe un servicio con ese nombre.') from exc
+    return RedirectResponse('/servicios?ok=1', status_code=303)
+
+
+@app.post('/servicios/{servicio_id}/alternar')
+def servicios_alternar(request: Request, servicio_id: int):
+    if not is_host_request(request):
+        raise HTTPException(403)
+    alternar_servicio(servicio_id)
+    return RedirectResponse('/servicios', status_code=303)
 
 
 @app.get('/asistencias', response_class=HTMLResponse)
@@ -134,11 +189,11 @@ def fidelizacion_page(request: Request):
     return render(request, 'fidelizacion.html', promociones=listar_promociones(), grupos=listar_grupos(), tipos=CLIENT_TYPES, clientes_grupos=listar_clientes_grupos())
 
 
-@app.post('/fidelizacion/promociones')
-def fidelizacion_crear_promocion(request: Request, nombre: str = Form(...), descripcion: str = Form(''), premio: str = Form(''), meta_visitas: int = Form(...), modo_conteo: str = Form(...), repeticion: str = Form(...), tipo_objetivo: str = Form(...), objetivo: str = Form(...), mensaje: str = Form(...), fecha_inicio: str = Form(''), fecha_fin: str = Form('')):
-    if not is_host_request(request):
-        raise HTTPException(403, 'No autorizado.')
-    if meta_visitas < 1 or modo_conteo not in {'acumuladas','consecutivas'} or repeticion not in {'una_vez','recurrente'} or tipo_objetivo not in {'categoria','grupo','todos'}:
+def validar_promocion(nombre, descripcion, premio, meta_visitas, modo_conteo, repeticion,
+                      tipo_objetivo, objetivo, mensaje, fecha_inicio, fecha_fin):
+    if not nombre.strip() or not mensaje.strip() or meta_visitas < 1 or meta_visitas > 1000:
+        raise HTTPException(400, 'Nombre, mensaje y meta válida son obligatorios.')
+    if modo_conteo not in {'acumuladas', 'consecutivas'} or repeticion not in {'una_vez', 'recurrente'} or tipo_objetivo not in {'categoria', 'grupo', 'todos'}:
         raise HTTPException(400, 'Revisa las reglas de la promoción.')
     if tipo_objetivo == 'grupo' and not any(g['nombre'] == objetivo for g in listar_grupos()):
         raise HTTPException(400, 'Selecciona un grupo válido.')
@@ -146,7 +201,43 @@ def fidelizacion_crear_promocion(request: Request, nombre: str = Form(...), desc
         raise HTTPException(400, 'Selecciona una categoría válida.')
     if fecha_inicio and fecha_fin and fecha_inicio > fecha_fin:
         raise HTTPException(400, 'La fecha de inicio no puede superar la fecha final.')
-    crear_promocion({'nombre': nombre.strip(), 'descripcion': descripcion.strip(), 'premio': premio.strip(), 'meta_visitas': meta_visitas, 'modo_conteo': modo_conteo, 'repeticion': repeticion, 'tipo_objetivo': tipo_objetivo, 'objetivo': objetivo if tipo_objetivo != 'todos' else 'Todos', 'mensaje': mensaje.strip(), 'fecha_inicio': fecha_inicio or None, 'fecha_fin': fecha_fin or None})
+    return {'nombre': nombre.strip(), 'descripcion': descripcion.strip(), 'premio': premio.strip(),
+            'meta_visitas': meta_visitas, 'modo_conteo': modo_conteo, 'repeticion': repeticion,
+            'tipo_objetivo': tipo_objetivo, 'objetivo': objetivo if tipo_objetivo != 'todos' else 'Todos',
+            'mensaje': mensaje.strip(), 'fecha_inicio': fecha_inicio or None, 'fecha_fin': fecha_fin or None}
+
+
+@app.get('/fidelizacion/promociones/{promocion_id}/editar', response_class=HTMLResponse)
+def editar_promocion_page(request: Request, promocion_id: int):
+    if not is_host_request(request):
+        raise HTTPException(403)
+    promocion = obtener_promocion(promocion_id)
+    if not promocion:
+        raise HTTPException(404)
+    return render(request, 'promocion_editar.html', promocion=promocion, tipos=CLIENT_TYPES,
+                  grupos=listar_grupos())
+
+
+@app.post('/fidelizacion/promociones/{promocion_id}/editar')
+def editar_promocion_submit(request: Request, promocion_id: int, nombre: str = Form(...), descripcion: str = Form(''), premio: str = Form(''), meta_visitas: int = Form(...), modo_conteo: str = Form(...), repeticion: str = Form(...), tipo_objetivo: str = Form(...), objetivo: str = Form(...), mensaje: str = Form(...), fecha_inicio: str = Form(''), fecha_fin: str = Form('')):
+    if not is_host_request(request):
+        raise HTTPException(403)
+    datos = validar_promocion(nombre, descripcion, premio, meta_visitas, modo_conteo,
+                             repeticion, tipo_objetivo, objetivo, mensaje, fecha_inicio, fecha_fin)
+    try:
+        actualizar_promocion(promocion_id, datos)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return RedirectResponse('/fidelizacion?ok=4', status_code=303)
+
+
+@app.post('/fidelizacion/promociones')
+def fidelizacion_crear_promocion(request: Request, nombre: str = Form(...), descripcion: str = Form(''), premio: str = Form(''), meta_visitas: int = Form(...), modo_conteo: str = Form(...), repeticion: str = Form(...), tipo_objetivo: str = Form(...), objetivo: str = Form(...), mensaje: str = Form(...), fecha_inicio: str = Form(''), fecha_fin: str = Form('')):
+    if not is_host_request(request):
+        raise HTTPException(403, 'No autorizado.')
+    datos = validar_promocion(nombre, descripcion, premio, meta_visitas, modo_conteo, repeticion,
+                              tipo_objetivo, objetivo, mensaje, fecha_inicio, fecha_fin)
+    crear_promocion(datos)
     return RedirectResponse('/fidelizacion?ok=1', status_code=303)
 
 

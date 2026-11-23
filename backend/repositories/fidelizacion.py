@@ -32,6 +32,27 @@ def crear_promocion(datos: dict):
              :tipo_objetivo,:objetivo,:mensaje,1,:fecha_inicio,:fecha_fin)''', datos)
 
 
+def obtener_promocion(promocion_id: int):
+    with get_connection() as conn:
+        return conn.execute('SELECT * FROM promociones WHERE id=?', (promocion_id,)).fetchone()
+
+
+def actualizar_promocion(promocion_id: int, datos: dict):
+    # Evitar reinterpretar logros ya concedidos al cambiar las reglas históricas.
+    with get_connection() as conn:
+        existe = conn.execute('SELECT * FROM promociones WHERE id=?', (promocion_id,)).fetchone()
+        if not existe:
+            raise ValueError('Promoción inexistente.')
+        logros = conn.execute('SELECT 1 FROM logros_promocion WHERE promocion_id=? LIMIT 1', (promocion_id,)).fetchone()
+        reglas = ('meta_visitas', 'modo_conteo', 'repeticion', 'tipo_objetivo', 'objetivo', 'fecha_inicio')
+        if logros and any(str(existe[k] or '') != str(datos[k] or '') for k in reglas):
+            raise ValueError('Hay logros registrados: no puedes cambiar meta, modalidad, público ni fecha inicial. Crea otra promoción para nuevas reglas.')
+        conn.execute("""UPDATE promociones SET nombre=:nombre,descripcion=:descripcion,premio=:premio,
+            meta_visitas=:meta_visitas,modo_conteo=:modo_conteo,repeticion=:repeticion,
+            tipo_objetivo=:tipo_objetivo,objetivo=:objetivo,mensaje=:mensaje,
+            fecha_inicio=:fecha_inicio,fecha_fin=:fecha_fin WHERE id=:id""", {**datos, 'id': promocion_id})
+
+
 def listar_promociones():
     with get_connection() as conn:
         return conn.execute('SELECT * FROM promociones ORDER BY activa DESC, id DESC').fetchall()

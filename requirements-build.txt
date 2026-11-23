@@ -1,4 +1,4 @@
 -r requirements.txt
-Nuitka==4.3
+Nuitka==4.3.5
 zstandard==0.25.0
 psutil==7.1.3

@@ -38,3 +38,13 @@ python -m unittest discover -s tests -v
 ## Funcionamiento y límites
 
 Conserva clientes, ventas, asistencias, promociones, segmentación, grupos manuales, notificaciones y preparación de mensajes WhatsApp. El envío se confirma manualmente y las imágenes se adjuntan manualmente. Las asistencias consecutivas se reinician por ruptura explícita, no por calendario automático. La autorización por IP no sustituye un inicio de sesión real; no expongas el servicio a Internet.
+
+## Interfaz urbana y editores (v3.2)
+
+- `Clientes`: corregida la plantilla Jinja de filtros y editor individual.
+- `Servicios`: catálogo editable con precio sugerido y estado.
+- `Ventas`: se registra el servicio brindado; la migración SQLite conserva ventas previas.
+- `Fidelización`: editor de promociones; reglas históricas protegidas tras obtener logros.
+- `frontend/scss/partials/_urban.scss`: paleta carbón/cobre y vistas móviles.
+- Pruebas: `pip install -r requirements-dev.txt` y `python -m unittest discover -s tests -v`.
+- [Flujos y módulos](docs/arquitectura/10_flujos_urbanos.md).

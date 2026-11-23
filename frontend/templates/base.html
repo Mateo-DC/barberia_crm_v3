@@ -1,40 +1,25 @@
 <!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#111827">
-  <meta name="description" content="Gestión local de clientes, visitas, promociones y campañas.">
-  <title>{{ title }}</title>
-  <link rel="stylesheet" href="/static/css/style.css">
-  <script src="/static/js/navigation.js" defer></script>
-</head>
-<body>
-  <a class="skip-link" href="#contenido">Saltar al contenido</a>
-  <header class="site-header">
-    <div class="header-inner">
-      <a class="brand" href="{{ '/' if is_admin else '/registro' }}" aria-label="Barbería CRM, inicio">
-        <span class="brand-mark" aria-hidden="true">B</span>
-        <span class="brand-name">BARBERÍA <span>CRM</span></span>
-      </a>
-      <button class="menu-toggle" type="button" aria-controls="primary-navigation"
-              aria-expanded="false" aria-label="Abrir menú" data-menu-toggle>
-        <span></span><span></span><span></span>
-      </button>
-      <nav id="primary-navigation" class="primary-nav" aria-label="Navegación principal">
-        {% if is_admin %}
-        <a href="/" {% if request.url.path == '/' %}aria-current="page"{% endif %}>Inicio</a>
-        <a href="/clientes" {% if request.url.path == '/clientes' %}aria-current="page"{% endif %}>Clientes</a>
-        <a href="/asistencias" {% if request.url.path == '/asistencias' %}aria-current="page"{% endif %}>Asistencias</a>
-        <a href="/fidelizacion" {% if request.url.path.startswith('/fidelizacion') %}aria-current="page"{% endif %}>Fidelización</a>
-        <a href="/ventas" {% if request.url.path == '/ventas' %}aria-current="page"{% endif %}>Ventas</a>
-        <a href="/campanas" {% if request.url.path == '/campanas' %}aria-current="page"{% endif %}>WhatsApp</a>
-        {% endif %}
-        <a href="/registro" {% if request.url.path == '/registro' %}aria-current="page"{% endif %}>Registro</a>
-      </nav>
-    </div>
-  </header>
-  <main id="contenido" class="page-container">{% block content %}{% endblock %}</main>
-  <footer class="site-footer"><span>Barbería CRM</span><span>Gestión local · Red privada</span></footer>
-</body>
-</html>
+<html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#121310">
+<title>{{ title }}</title><meta name="description" content="Gestión local de barbería: clientes, servicios y fidelización.">
+<link rel="stylesheet" href="/static/css/style.css"><script src="/static/js/navigation.js" defer></script>
+</head><body>
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+<header class="site-header"><div class="header-inner">
+<a class="brand" href="{{ '/' if is_admin else '/registro' }}"><span class="brand-mark">B</span><span class="brand-name">BARBERÍA <span>CRM</span></span></a>
+<button class="menu-toggle" type="button" data-menu-toggle aria-controls="primary-navigation" aria-expanded="false" aria-label="Abrir navegación"><span></span><span></span><span></span></button>
+<nav id="primary-navigation" class="primary-nav" aria-label="Secciones">
+{% if is_admin %}
+<a href="/" {% if request.url.path == '/' %}aria-current="page"{% endif %}>Resumen</a>
+<a href="/clientes" {% if request.url.path.startswith('/clientes') %}aria-current="page"{% endif %}>Clientes</a>
+<a href="/servicios" {% if request.url.path.startswith('/servicios') %}aria-current="page"{% endif %}>Servicios</a>
+<a href="/ventas" {% if request.url.path.startswith('/ventas') %}aria-current="page"{% endif %}>Ventas</a>
+<a href="/asistencias" {% if request.url.path.startswith('/asistencias') %}aria-current="page"{% endif %}>Visitas</a>
+<a href="/fidelizacion" {% if request.url.path.startswith('/fidelizacion') %}aria-current="page"{% endif %}>Fidelización</a>
+<a href="/campanas" {% if request.url.path.startswith('/campanas') %}aria-current="page"{% endif %}>Campañas</a>
+{% endif %}
+<a href="/registro" {% if request.url.path == '/registro' %}aria-current="page"{% endif %}>Registro LAN</a>
+</nav></div></header>
+<main id="contenido" class="page-container">{% block content %}{% endblock %}</main>
+<footer class="site-footer"><span>BARBERÍA CRM</span><span>Control local · Datos en tu PC</span></footer>
+</body></html>

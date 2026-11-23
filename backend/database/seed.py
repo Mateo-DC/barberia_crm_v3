@@ -1,7 +1,6 @@
 from datetime import date, timedelta
 from backend.database.connection import get_connection
 
-
 def seed_demo_data():
     hoy = date.today()
     ejemplos = [
@@ -19,38 +18,18 @@ def seed_demo_data():
             return
         for nombre, telefono, tipo, dias, visitas in ejemplos:
             ultima = (hoy - timedelta(days=dias)).isoformat()
-            conn.execute(
-                """INSERT INTO clientes
+            conn.execute("""INSERT INTO clientes
                 (nombre, telefono, tipo_cliente, ultima_visita, total_gastado,
                  visitas_totales, fecha_registro)
                 VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                (
-                    nombre,
-                    telefono,
-                    tipo,
-                    ultima,
-                    visitas * 35.0,
-                    visitas,
-                    hoy.isoformat(),
-                ),
-            )
+                (nombre, telefono, tipo, ultima, visitas * 35.0, visitas, hoy.isoformat()))
             cliente_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
             for i in range(min(visitas, 4)):
                 fecha = (hoy - timedelta(days=i * 9 + dias)).isoformat()
-                campana = [
-                    "Sin campaña",
-                    "Promo WhatsApp 15%",
-                    "Publicidad general",
-                    "Reactivación de inactivos",
-                ][i % 4]
-                conn.execute(
-                    """INSERT INTO ventas
+                campana = ["Sin campaña", "Promo WhatsApp 15%",
+                           "Publicidad general", "Reactivación de inactivos"][i % 4]
+                conn.execute("""INSERT INTO ventas
                     (cliente_id, monto, fecha, campana_asociada)
-                    VALUES (?, ?, ?, ?)""",
-                    (cliente_id, 35.0, fecha, campana),
-                )
-                conn.execute(
-                    """INSERT INTO asistencias(cliente_id, fecha, nota)
-                    VALUES (?, ?, 'Importada de una venta de demostración')""",
-                    (cliente_id, fecha),
-                )
+                    VALUES (?, ?, ?, ?)""", (cliente_id, 35.0, fecha, campana))
+                conn.execute("""INSERT INTO asistencias(cliente_id, fecha, nota)
+                    VALUES (?, ?, 'Importada de una venta de demostración')""", (cliente_id, fecha))

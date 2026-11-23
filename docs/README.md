@@ -28,3 +28,7 @@ Puedes abrir los enlaces desde VS Code para ir al código real.
 4. Regenera el CSS únicamente cuando cambies los archivos de `frontend/scss`.
 
 **Advertencia:** explicar un paradigma no significa implementarlo por completo. La unificación o la resolución de Prolog son ejemplos conceptuales; la aplicación usa Python y SQL, no un intérprete lógico.
+
+## Experiencia de uso y operaciones
+
+- [Flujos urbanos: clientes, servicios, asistencia y fidelización](arquitectura/10_flujos_urbanos.md)
