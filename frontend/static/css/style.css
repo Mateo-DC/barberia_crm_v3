@@ -2,16 +2,18 @@
    Para regenerar: frontend\build_styles.bat (requiere Dart Sass via npx). */
 :root {
   color-scheme: dark;
-  --bg: #0b1220;
-  --header: #111827;
-  --panel: #162133;
-  --panel2: #1e2b3f;
-  --panel-hover: #22324a;
-  --line: #2b3a50;
-  --text: #f4f7fc;
-  --muted: #a8b5c9;
-  --accent: #f2c47c;
-  --accent-deep: #dba658;
+  --bg: #090708;
+  --header: #100d0f;
+  --panel: #161214;
+  --panel2: #211c1f;
+  --panel-hover: #2b2529;
+  --line: #3a3035;
+  --text: #f5efe8;
+  --muted: #b6ada4;
+  --accent: #e2b650;
+  --accent-deep: #ba8b2e;
+  --accent-lime: #43e05b;
+  --accent-lime-soft: #8dff70;
   --success: #76d2a6;
   --warning: #f3cd8a;
   --radius: 16px;
@@ -19,7 +21,7 @@
 }
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body { min-height: 100vh; margin: 0; background: radial-gradient(ellipse 100% 50% at 50% -20%, #21324c 0%, transparent 70%), var(--bg); color: var(--text); font: 15px/1.6 system-ui, -apple-system, Segoe UI, sans-serif; }
+body { min-height: 100vh; margin: 0; background: radial-gradient(ellipse 78% 28% at 18% -4%, rgba(226,182,80,.18) 0%, transparent 65%), radial-gradient(ellipse 60% 18% at 82% -2%, rgba(67,224,91,.12) 0%, transparent 60%), var(--bg); color: var(--text); font: 15px/1.6 system-ui, -apple-system, Segoe UI, sans-serif; }
 button, input, select, textarea { font: inherit; }
 a { color: var(--accent); text-decoration: none; }
 a:hover { color: #ffe0ab; }
@@ -177,3 +179,26 @@ th { background: #252b25; color: #e5e0d5; }
 @media(max-width:1050px) { .workspace-grid { grid-template-columns: 1fr; } .quick-links { grid-template-columns: repeat(2,1fr); } }
 @media(max-width:900px) { .registration-wrap { grid-template-columns: 1fr; gap: 12px; } .registration-wrap .form-card { margin-top: 0; } }
 @media(max-width:580px) { .quick-links { gap: 8px; } .quick-links a { padding: 12px; } .workspace-grid { gap: 12px; } .toolbar { width: 100%; } .row-actions { gap: 4px; } }
+
+
+/* v3.3 branding: Golden Barber Shop + Moda Lavoe */
+.site-header{background:linear-gradient(180deg, rgba(19,15,17,.98), rgba(12,9,10,.96));border-bottom:1px solid rgba(226,182,80,.12);}
+.brand{display:inline-flex;align-items:center;gap:14px;min-width:0;}
+.brand-mark{display:block;width:52px;height:52px;border:1px solid rgba(226,182,80,.38);border-radius:14px;background:linear-gradient(160deg,#140d0f,#24181d);box-shadow:0 10px 26px rgba(0,0,0,.28);object-fit:cover;}
+.brand-copy{display:grid;gap:2px;min-width:0;}
+.brand-subtitle{font-size:.76rem;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;}
+.identity-ribbon{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto;}
+.identity-pill{display:inline-flex;align-items:center;min-height:30px;padding:6px 12px;border-radius:999px;font-size:.72rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border:1px solid transparent;}
+.identity-pill--gold{background:rgba(226,182,80,.13);color:var(--accent);border-color:rgba(226,182,80,.34);}
+.identity-pill--lime{background:rgba(67,224,91,.11);color:var(--accent-lime-soft);border-color:rgba(67,224,91,.35);}
+.brand-banner{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;}
+.primary-nav a[aria-current="page"]{background:rgba(226,182,80,.12);color:var(--accent);}
+.quick-links a{position:relative;overflow:hidden;background:#20191c;border-color:#3f3136;}
+.quick-links a:hover{border-color:#8d6f2f;background:#2a2125;}
+.quick-links a::after{content:"";position:absolute;inset:auto 14px 0 14px;height:2px;background:linear-gradient(90deg,var(--accent),transparent 65%);opacity:.85;}
+.quick-links a:last-child::after{background:linear-gradient(90deg,var(--accent-lime),transparent 65%);}
+.stats article{border-top:2px solid #7d6024;}
+button, .button-link{background:linear-gradient(180deg,#f1ca65,#d5a73e);color:#171311;}
+button:hover, .button-link:hover{background:linear-gradient(180deg,#f6d985,#e0b659);color:#171311;}
+.site-footer{border-top:1px solid rgba(226,182,80,.12);background:rgba(10,8,9,.9);}
+@media(max-width:1180px){.header-inner{align-items:flex-start;flex-wrap:wrap}.identity-ribbon{order:3;width:100%;margin-left:0}}

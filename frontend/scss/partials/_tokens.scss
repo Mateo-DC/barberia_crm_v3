@@ -1,19 +1,21 @@
 // Colores globales. Cambia aquí la identidad visual de la barbería.
 $radius: 16px;
-$accent: #f2c47c;
+$accent: #e2b650;
 :root {
   color-scheme: dark;
-  --bg: #0b1220;
-  --header: #111827;
-  --panel: #162133;
-  --panel2: #1e2b3f;
-  --panel-hover: #22324a;
-  --line: #2b3a50;
-  --text: #f4f7fc;
-  --muted: #a8b5c9;
-  --accent: #f2c47c;
-  --accent-deep: #dba658;
-  --success: #76d2a6;
+  --bg: #090708;
+  --header: #100d0f;
+  --panel: #161214;
+  --panel2: #211c1f;
+  --panel-hover: #2b2529;
+  --line: #3a3035;
+  --text: #f5efe8;
+  --muted: #b6ada4;
+  --accent: #e2b650;
+  --accent-deep: #ba8b2e;
+  --accent-lime: #43e05b;
+  --accent-lime-soft: #8dff70;
+  --success: #7fd88f;
   --warning: #f3cd8a;
   --radius: 16px;
   --shadow: 0 18px 48px rgba(0, 0, 0, .12);
