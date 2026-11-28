@@ -1,0 +1,105 @@
+name: Build and Release Windows Installer
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Versión del instalador (ej. 1.0.0)"
+        required: true
+        default: "1.0.0"
+
+jobs:
+  build-installer:
+    runs-on: windows-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Determine release version
+        id: ver
+        shell: pwsh
+        run: |
+          if ("${{ github.ref }}" -like "refs/tags/v*") {
+            $v = "${{ github.ref_name }}".TrimStart("v")
+          } else {
+            $v = "${{ inputs.version }}"
+          }
+          echo "version=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Set up Python 3.12 x64
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: "x64"
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-build.txt
+
+      - name: Verify or build frontend CSS
+        shell: cmd
+        run: |
+          if not exist "frontend\static\css\style.css" (
+            if exist "frontend\build_styles.bat" (
+              call "frontend\build_styles.bat"
+            ) else (
+              echo [ERROR] Falta frontend\static\css\style.css
+              exit /b 1
+            )
+          )
+          if not exist "reports" mkdir reports
+
+      - name: Compile Nuitka Standalone with MSVC
+        shell: cmd
+        run: |
+          python tools\build_clock.py start
+          python -m nuitka ^
+            --msvc=latest ^
+            --standalone ^
+            --assume-yes-for-downloads ^
+            --output-dir=build ^
+            --output-filename=BarberiaCRM.exe ^
+            --include-data-dir=frontend\templates=frontend/templates ^
+            --include-data-dir=frontend\static=frontend/static ^
+            --include-package=backend ^
+            --include-package=fastapi ^
+            --include-package=starlette ^
+            --include-package=jinja2 ^
+            --report=reports\nuitka_compilation.xml ^
+            launcher.py
+          set BUILD_RESULT=%ERRORLEVEL%
+          python tools\build_clock.py stop
+          if not "%BUILD_RESULT%"=="0" exit /b %BUILD_RESULT%
+          if not exist "build\launcher.dist\BarberiaCRM.exe" exit /b 1
+
+      - name: Install Inno Setup 6
+        shell: pwsh
+        run: |
+          choco install innosetup -y --no-progress
+
+      - name: Build Windows Installer (EXE)
+        shell: cmd
+        run: |
+          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DMyAppVersion=${{ steps.ver.outputs.version }} installer.iss
+          if not exist "build\installer\BarberiaCRM-Setup-${{ steps.ver.outputs.version }}.exe" exit /b 1
+
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BarberiaCRM-Setup-${{ steps.ver.outputs.version }}
+          path: build\installer\BarberiaCRM-Setup-${{ steps.ver.outputs.version }}.exe
+
+      - name: Publish Installer to GitHub Releases
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build\installer\BarberiaCRM-Setup-${{ steps.ver.outputs.version }}.exe
+          generate_release_notes: true
